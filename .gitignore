@@ -1,0 +1,57 @@
+# ===============================
+# Maven
+# ===============================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===============================
+# Logs
+# ===============================
+*.log
+logs/
+
+# ===============================
+# Spring Boot Config (SENSIBLE)
+# ===============================
+application.properties
+application.yml
+application-*.properties
+application-*.yml
+
+# ===============================
+# Env variables
+# ===============================
+.env
+
+# ===============================
+# IDEs
+# ===============================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+.vscode/
+
+# STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+# ===============================
+# OS files
+# ===============================
+.DS_Store
+Thumbs.db
