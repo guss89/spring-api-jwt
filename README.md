@@ -53,7 +53,34 @@ Crear archivo de configuración:
 
 cp src/main/resources/application-example.properties src/main/resources/application.properties
 
-Configurar credenciales en application.properties
+Configurar credenciales de la base de datos en application.properties (reemplazar los placeholders)
+
+Definir la clave de firma JWT en la variable de entorno JWT_SECRET (mínimo 32 bytes). Generar una:
+
+openssl rand -base64 48
+
+En PowerShell (alternativa sin openssl):
+
+$b = New-Object byte[] 48; [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)
+
+(No usar Get-Random: no es criptográficamente seguro.)
+
+Definirla en Linux/macOS (sesión actual):
+
+export JWT_SECRET="valor_generado"
+
+Definirla en Windows (PowerShell, sesión actual):
+
+$env:JWT_SECRET = "valor_generado"
+
+Definirla en Windows de forma persistente (abrir una nueva terminal después):
+
+setx JWT_SECRET "valor_generado"
+
+(setx guarda el valor en texto plano en el registro del usuario: válido para desarrollo; en producción usar el gestor de secretos o las variables del entorno de despliegue.)
+
+Opcional: jwt.expiration-ms en application.properties define la duración del token en milisegundos (por defecto 3600000 = 1 hora).
+La aplicación no arranca si JWT_SECRET falta o tiene menos de 32 bytes.
 
 Ejecutar el proyecto:
 

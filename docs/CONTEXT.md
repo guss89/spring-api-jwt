@@ -34,7 +34,7 @@ API REST para gestionar un servicio de entrenamiento de calistenia:
 5. Se devuelve un DTO `XxxResponse` o la entidad directamente.
 6. Los errores los traduce `GlobalExceptionHandler`: `ResourceNotFoundException` → 404, `IllegalArgumentException` → 400, `IllegalStateException` → 403, `ConflictException` → 409.
 
-**Configuración:** `application.properties` (excluido de git) con MySQL en `localhost:3306/calisthenics`, `ddl-auto=update` (Hibernate crea/actualiza las tablas solo).
+**Configuración:** `application.properties` (excluido de git) con MySQL en `localhost:3306/calisthenics`, `ddl-auto=update` (Hibernate crea/actualiza las tablas solo). Plantilla versionada: `src/main/resources/application-example.properties`. JWT: `jwt.secret` (obligatoria, ≥32 bytes; se toma de la variable de entorno `JWT_SECRET`) y `jwt.expiration-ms` (opcional, 3600000 por defecto).
 
 ## Controladores y endpoints
 | Controlador | Ruta base | Endpoints | Entrada / salida |
@@ -101,6 +101,7 @@ Detectadas con evidencia en el código:
 
 ## Decisiones técnicas
 - Autenticación **stateless con JWT**; el token guarda id de usuario y rol. Contraseñas con **BCrypt**.
+- **Clave JWT fuera del código (Fase 4):** `JwtService` la recibe por constructor (`@Value`), valida ≥32 bytes al arrancar (si no, la app no arranca) y construye la `SecretKey` una sola vez. `isTokenValid` devuelve `false` ante tokens caducados, manipulados o mal formados (la petición sigue sin autenticar → 403). La clave antigua (hardcodeada) se considera comprometida.
 - **Inyección de dependencias por constructor** (campos `private final`).
 - Entidades con **Lombok**; relaciones `FetchType.LAZY`; enums con `EnumType.STRING`.
 - Errores centralizados en `GlobalExceptionHandler`.
@@ -117,4 +118,4 @@ Detectadas con evidencia en el código:
 - **2026-11-25 (Fase 2):** nuevo agente `verifier` (`.claude/agents/verifier.md`). Primera verificación de pagos: veredicto OK, 25/25 pruebas (13 de servicio con Mockito, 12 de controlador con `@WebMvcTest` + `@Import(SecurityConfig.class)`). Ejecutar: `./mvnw test -Dtest=ClientPaymentServiceTest,ClientPaymentControllerTest`.
 - **2026-11-25 (Fase 2, ciclo developer → verifier):** validación en pagos (`@NotNull` en userId, clientMembershipId, amount, paymentDate; `@Positive` en amount; `@Valid` en create/update). 37/37 pruebas (12 nuevas de 400 Bad Request).
 - **2026-11-25 (Fase 3):** CRUD de membresías: `MembershipPlanController`/`Service`/`Repository` y `ClientMembershipController`/`Service` con sus DTOs; `MembershipPlan` pasa a Lombok y `@Table(name = "membership_plan")`; nueva `ConflictException` (409); validación membresía↔usuario en `ClientPaymentService`. Ciclo developer → verifier: ⚠️ (reasignación con pagos y límites de columna en `MembershipPlanRequest`: `@Size(max=100)`, `@Digits(6,2)`) → corregido → ✅. 122/122 pruebas. Ejecutar: `./mvnw test -Dtest="MembershipPlan*Test,ClientMembership*Test,ClientPayment*Test"`.
-- **Sin commit:** todo lo de las Fases 1–3.
+- **2026-11-25 (Fase 4):** clave JWT sacada del código (`jwt.secret` / `JWT_SECRET`), expiración configurable (`jwt.expiration-ms`), tokens inválidos → `false` en vez de excepción. `application-example.properties` versionado (excepción en `.gitignore`), README con cómo generar y definir `JWT_SECRET`. Ciclo developer → verifier: ⚠️ (README recomendaba `Get-Random`, no seguro → corregido con `RandomNumberGenerator`). 129/129 pruebas (7 nuevas en `JwtServiceTest`).

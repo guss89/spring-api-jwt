@@ -3,7 +3,7 @@ package com.calisthenics.calisthenics;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(properties = "jwt.secret=test-secret-not-real-0123456789-abcdefghijkl")
 class CalisthenicsApplicationTests {
 
     @Test
