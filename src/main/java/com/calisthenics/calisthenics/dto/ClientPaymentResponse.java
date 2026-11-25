@@ -2,62 +2,28 @@ package com.calisthenics.calisthenics.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.calisthenics.calisthenics.model.catalogs.PaymentStatus;
 import com.calisthenics.calisthenics.model.catalogs.Status;
 
+import lombok.*;
+
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class ClientPaymentResponse {
-    public Long id;
-    public BigDecimal amount;
-    public LocalDate paymentDate;
-    public Status status;
-    public Long clientId;
 
-    public ClientPaymentResponse(
-            Long id, BigDecimal amount, LocalDate paymentDate, Status status, Long clientId
-    ){
-        this.id = id;
-        this.amount = amount;
-        this.paymentDate = paymentDate;
-        this.status = status;
-        this.clientId = clientId;
-    }
+    private Long id;
+    private BigDecimal amount;
+    private String paymentMethod;
+    private LocalDate paymentDate;
+    private PaymentStatus status;
+    private String reference;
+    private String notes;
+    private LocalDateTime createdAt;
+    private Long userId;
+    private Long clientMembershipId;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public void setPaymentDate(LocalDate paymentDate) {
-        this.paymentDate = paymentDate;
-    }
-
-    public Status setStatus() {
-        return status;
-    }
-
-    public void setClientId(Long clientId) {
-        this.clientId = clientId;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public LocalDate getPaymentDate() {
-        return paymentDate;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public Long getClientId() {
-        return clientId;
-    }
 }

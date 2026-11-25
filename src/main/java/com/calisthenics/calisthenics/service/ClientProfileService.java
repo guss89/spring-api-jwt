@@ -27,7 +27,6 @@ public class ClientProfileService {
     public ClientProfile update(Long id, ClientProfile clientProfile){
         ClientProfile existing = findById(id);
 
-        existing.setBirthdate(clientProfile.getBirthdate());
         existing.setInitialWeight(clientProfile.getInitialWeight());
         existing.setInitialHeight(clientProfile.getInitialHeight());
 

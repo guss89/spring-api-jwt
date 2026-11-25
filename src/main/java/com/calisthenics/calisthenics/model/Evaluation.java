@@ -4,43 +4,40 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import lombok.*;
 
 @Entity
 @Table(name = "evaluation")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Evaluation {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private Long id;
-    private Integer maxReps;
+
+    @Column(name = "max_reps")
+    private Long maxReps;
+
+    @Column(name = "max_weight", precision = 6, scale = 2)
     private BigDecimal maxWeight;
+
+    @Column(name = "register_date", nullable = false)
     private LocalDate registerDate;
+
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
-    //
+    // Relación con User
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    //
+
+    // Relación con Exercise
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
-
-    /*Getters*/
-    public Long getId(){ return id; }
-    public Integer getMaxReps(){ return maxReps; }
-    public BigDecimal getMaxWeight(){ return maxWeight; }
-    public LocalDate getRegisterDate(){ return registerDate; }
-    public String getNotes(){ return notes; }
-    public User getUser(){return user;}
-    public Exercise getExerciseId(){return exercise;}
-
-    /*Setters*/
-    public void setMaxReps(Integer maxReps){ this.maxReps = maxReps; }
-    public void setMaxWeight(BigDecimal weight){ maxWeight = weight; }
-    public void setRegisterDate(LocalDate register){ registerDate = register; }
-    public void setNotes(String notes){ this. notes = notes; }
-
-    public void setUser(User user){ this.user = user; }
-    public void setExerciseId(Exercise exercise){ this.exercise = exercise; }
 }

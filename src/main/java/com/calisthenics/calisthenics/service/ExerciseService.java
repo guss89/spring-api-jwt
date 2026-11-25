@@ -30,7 +30,7 @@ public class ExerciseService {
         Exercise exercise = new Exercise();
         exercise.setName(request.getName());
         exercise.setDescription(request.getDescription());
-        exercise.setWeighted(request.getWeighted());
+        exercise.setIsWeighted(request.getWeighted());
         exercise.setExerciseCategory(exerciseCategory);
 
         Exercise saved = exerciseRepository.save(exercise);
@@ -39,7 +39,7 @@ public class ExerciseService {
                 saved.getName(),
                 saved.getDescription(),
                 saved.getExerciseCategory().getId(),
-                saved.getWeighted()
+                saved.getIsWeighted()
         );
     }
 
@@ -59,7 +59,7 @@ public class ExerciseService {
         exercise.setName(request.getName());
         exercise.setDescription(request.getDescription());
         exercise.setExerciseCategory(exerciseCategory);
-        exercise.setWeighted(request.getWeighted());
+        exercise.setIsWeighted(request.getWeighted());
 
         return exerciseRepository.save(exercise);
     }

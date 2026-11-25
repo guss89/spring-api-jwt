@@ -55,3 +55,9 @@ build/
 # ===============================
 .DS_Store
 Thumbs.db
+
+# ===============================
+# Claude Code (configuración personal, no compartir)
+# ===============================
+.claude/settings.local.json
+CLAUDE.local.md

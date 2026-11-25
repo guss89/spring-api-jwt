@@ -4,35 +4,29 @@ import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Table(name = "exercise_category")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ExerciseCategory {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
 
     @OneToMany(
             mappedBy = "exerciseCategory",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
     )
-
-    public List<Exercise> exercises = new ArrayList<>();
-
-    /*Getters*/
-    public Long getId(){
-        return  id;
-    }
-    public String getName(){
-        return name;
-    }
-    public List<Exercise> getExercises(){
-        return  exercises;
-    }
-    /*Setters*/
-    public void  setName(String name){
-        this.name = name;
-    }
+    private List<Exercise> exercises = new ArrayList<>();
 }

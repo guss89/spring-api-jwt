@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn compile:*)",
+      "Bash(mvn test:*)",
+      "Bash(./mvnw compile:*)",
+      "Bash(./mvnw test:*)",
+      "Bash(./mvnw -q compile:*)",
+      "Bash(./mvnw -q test:*)",
+      "Bash(git diff:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)"
+    ],
+    "ask": [
+      "Bash(git commit:*)",
+      "Edit(src/main/resources/application.properties)"
+    ]
+  }
+}

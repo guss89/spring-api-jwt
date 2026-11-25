@@ -2,46 +2,42 @@ package com.calisthenics.calisthenics.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
-@Table(name="client")
+@Table(name = "client_profile")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ClientProfile {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private LocalDate birthdate;
-    private double initialWeight;
-    private double initialHeight;
-    private LocalDateTime createdAt;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    @Column(name = "initial_weight", precision = 5, scale = 2)
+    private BigDecimal initialWeight;
+
+    @Column(name = "initial_height", precision = 5, scale = 2)
+    private BigDecimal initialHeight;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    /*Getters*/
-    public  LocalDate getBirthdate(){
-        return  birthdate;
-    }
-    public double getInitialWeight(){
-        return  initialWeight;
-    }
-    public double getInitialHeight(){
-        return  initialHeight;
-    }
-    public Long getId(){return  id;}
-    public LocalDateTime getCreatedAt(){ return createdAt; }
-    public User getUser(){ return user; }
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
-    /*Setters*/
-    public void setBirthdate(LocalDate birthdate){ this.birthdate = birthdate; }
-    public void setInitialWeight(double weight){
-        initialWeight = weight;
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
     }
-    public void setInitialHeight(double height){
-        initialHeight = height;
-    }
-    public void setCreatedAt(LocalDateTime createdAt) {this.createdAt = createdAt; }
-    public void setUser(User user){ this.user = user; }
 }

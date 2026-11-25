@@ -1,48 +1,31 @@
 package com.calisthenics.calisthenics.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "exercise")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Exercise {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
-    private Boolean weighted;
+
+    @Column(name = "is_weighted")
+    private Boolean isWeighted;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_category_id", nullable = false)
     private ExerciseCategory exerciseCategory;
-
-    /*Getters*/
-    public  Long getId(){
-        return id;
-    }
-    public String getName(){
-        return name;
-    }
-    public String getDescription(){
-        return description;
-    }
-    public  Boolean getWeighted(){
-        return weighted;
-    }
-    public ExerciseCategory getExerciseCategory() {
-        return exerciseCategory;
-    }
-
-    /*Setters*/
-    public void setName(String name){
-        this.name = name;
-    }
-    public void setWeighted(boolean isWeighted){
-        this.weighted = isWeighted;
-    }
-    public void setDescription(String description){
-        this.description = description;
-    }
-    public void setExerciseCategory(ExerciseCategory exerciseCategory) { this.exerciseCategory = exerciseCategory; }
 }

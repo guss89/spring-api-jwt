@@ -41,7 +41,7 @@ public class ClientRoutineService {
         clientRoutine.setRoutine(routine);
         clientRoutine.setStartDate(request.getStartDate());
         clientRoutine.setEndDate(request.getEndDate());
-        clientRoutine.setObservation(request.getObservations());
+        clientRoutine.setObservations(request.getObservations());
         clientRoutine.setActive(request.getActive());
 
         ClientRoutine saved = clientRoutineRepository.save(clientRoutine);
@@ -52,7 +52,7 @@ public class ClientRoutineService {
                 saved.getRoutine().getId(),
                 saved.getStartDate(),
                 saved.getEndDate(),
-                saved.getObservation(),
+                saved.getObservations(),
                 saved.getActive()
         );
     }
@@ -75,7 +75,7 @@ public class ClientRoutineService {
         clientRoutine.setRoutine(routine);
         clientRoutine.setStartDate(request.getStartDate());
         clientRoutine.setEndDate(request.getEndDate());
-        clientRoutine.setObservation(request.getObservations());
+        clientRoutine.setObservations(request.getObservations());
         clientRoutine.setActive(request.getActive());
 
         return clientRoutineRepository.save(clientRoutine);

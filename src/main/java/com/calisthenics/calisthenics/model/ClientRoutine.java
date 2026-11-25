@@ -3,53 +3,47 @@ package com.calisthenics.calisthenics.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import lombok.*;
 
 @Entity
 @Table(name = "client_routine")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ClientRoutine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private Long id;
+
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
+
+    @Column(name = "end_date")
     private LocalDate endDate;
-    private String observation;
+
+    @Column(name = "observations", columnDefinition = "TEXT")
+    private String observations;
+
+    @Column(nullable = false)
     private Boolean active;
 
-    @ManyToOne
+    // Relación con User
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
+    // Relación con Routine
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "routine_id", nullable = false)
     private Routine routine;
 
-    /*Getters*/
-    public Long getId() {return id;}
-    public LocalDate getStartDate(){ return startDate; }
-    public LocalDate getEndDate(){ return startDate; }
-    public String getObservation(){ return observation; }
-    public Boolean getActive(){ return  active; }
-    public User getUser() {
-        return user;
+    @PrePersist
+    public void prePersist() {
+        if (this.active == null) {
+            this.active = true;
+        }
     }
-    public Routine getRoutine(){
-        return routine;
-    }
-
-    /*Setters*/
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
-    public void setObservation(String observation) {
-        this.observation = observation;
-    }
-    public void setUser(User user) { this.user = user; }
-    public void setRoutine(Routine routine) { this.routine = routine; }
-    public void setActive(Boolean active) { this.active = active; }
-
 }

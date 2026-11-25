@@ -1,55 +1,41 @@
 package com.calisthenics.calisthenics.dto;
 
-import com.calisthenics.calisthenics.model.catalogs.Status;
+import com.calisthenics.calisthenics.model.catalogs.PaymentStatus;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ClientPaymentRequest {
-    public Long id;
-    public BigDecimal amount;
-    public LocalDate paymentDate;
-    public Status status;
-    public Long userId;
 
+    private Long id;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @NotNull
+    @Positive
+    private BigDecimal amount;
 
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
+    private String paymentMethod;
 
-    public void setPaymentDate(LocalDate paymentDate) {
-        this.paymentDate = paymentDate;
-    }
+    @NotNull
+    private LocalDate paymentDate;
 
-    public Status setStatus() {
-        return status;
-    }
+    private PaymentStatus status;
+    private String reference;
+    private String notes;
+    private LocalDateTime createdAt;
 
-    public void setClientId(Long userId) {
-        this.userId = userId;
-    }
+    @NotNull
+    private Long userId;
 
-    public Long getId() {
-        return id;
-    }
+    @NotNull
+    private Long clientMembershipId;
 
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public LocalDate getPaymentDate() {
-        return paymentDate;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public Long getClientId() {
-        return userId;
-    }
 }

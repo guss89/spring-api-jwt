@@ -42,7 +42,7 @@ public class EvaluationService {
         evaluation.setNotes(request.getNotes());
         evaluation.setRegisterDate(request.getRegisterDate());
         evaluation.setUser(user);
-        evaluation.setExerciseId(exercise);
+        evaluation.setExercise(exercise);
 
         Evaluation saved = evaluationRepository.save(evaluation);
         return new EvaluationResponse(
@@ -51,8 +51,8 @@ public class EvaluationService {
                 saved.getMaxWeight(),
                 saved.getNotes(),
                 saved.getRegisterDate(),
-                saved.getUser(),
-                saved.getExerciseId()
+                saved.getUser().getId(),
+                saved.getExercise().getId()
         );
     }
 
@@ -75,7 +75,7 @@ public class EvaluationService {
         evaluation.setNotes(request.getNotes());
         evaluation.setRegisterDate(request.getRegisterDate());
         evaluation.setUser(user);
-        evaluation.setExerciseId(exercise);
+        evaluation.setExercise(exercise);
         return evaluation;
     }
 

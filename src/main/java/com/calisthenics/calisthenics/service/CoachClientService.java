@@ -47,7 +47,10 @@ public class CoachClientService {
             throw new RuntimeException("Esta relación ya existe");
         }
 
-        CoachClient relation = new CoachClient(coach, client);
+        CoachClient relation = CoachClient.builder()
+                .coach(coach)
+                .client(client)
+                .build();
 
         return coachClientRepository.save(relation);
     }

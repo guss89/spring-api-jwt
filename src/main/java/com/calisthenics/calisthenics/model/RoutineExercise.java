@@ -1,17 +1,29 @@
 package com.calisthenics.calisthenics.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "routine_exercise")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class RoutineExercise {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     private Long id;
-    private int sets;
-    private int reps;
-    private int restSeconds;
+
+    @Column(nullable = false)
+    private Integer sets;
+
+    @Column(nullable = false)
+    private Integer reps;
+
+    @Column(name = "rest_seconds")
+    private Integer restSeconds;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "routine_id", nullable = false)
@@ -24,24 +36,4 @@ public class RoutineExercise {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "body_region_id", nullable = false)
     private BodyRegion bodyRegion;
-
-    /*Getters*/
-    public Long getId(){ return id; }
-    public int getSets(){ return sets;}
-    public int getReps(){ return reps;}
-    public int getRestSeconds(){ return restSeconds;}
-
-    public Routine getRoutine() { return routine; }
-    public Exercise getExercise() { return exercise; }
-    public BodyRegion getBodyRegion() { return bodyRegion; }
-
-    /*Setter*/
-
-    public void setSets( int sets) { this.sets = sets; }
-    public void setReps( int reps) { this.reps = reps; }
-    public void setRestSeconds( int restSeconds) { this.restSeconds = restSeconds; }
-
-    public void setRoutine(Routine routine){ this.routine = routine; }
-    public void setExercise(Exercise exercise){ this.exercise = exercise; }
-    public void setBodyRegion(BodyRegion bodyRegion){ this.bodyRegion = bodyRegion; }
 }
