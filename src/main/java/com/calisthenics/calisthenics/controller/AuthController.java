@@ -1,9 +1,12 @@
 package com.calisthenics.calisthenics.controller;
 
 import com.calisthenics.calisthenics.dto.LoginRequest;
+import com.calisthenics.calisthenics.dto.LoginResponse;
 import com.calisthenics.calisthenics.dto.RegisterRequest;
+import com.calisthenics.calisthenics.dto.UserResponse;
 import com.calisthenics.calisthenics.model.User;
 import com.calisthenics.calisthenics.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,18 +23,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody RegisterRequest request){
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request){
 
         User user = authService.register(request);
 
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequest request){
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request){
 
-        String token = authService.login(request);
+        LoginResponse response = authService.login(request);
 
-        return ResponseEntity.ok(token);
+        return ResponseEntity.ok(response);
     }
 }

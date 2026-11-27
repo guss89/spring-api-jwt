@@ -39,7 +39,7 @@ API REST para gestionar un servicio de entrenamiento de calistenia:
 ## Controladores y endpoints
 | Controlador | Ruta base | Endpoints | Entrada / salida |
 |---|---|---|---|
-| `AuthController` | `/auth` | `POST /register`, `POST /login` | `RegisterRequest` → `User`; `LoginRequest` → token (String) |
+| `AuthController` | `/auth` | `POST /register`, `POST /login` | `RegisterRequest` → `UserResponse` (sin `passwordHash`); `LoginRequest` → `LoginResponse` {token, role, userId} |
 | `BodyRegionController` | `/api/v1/body-regions` | POST, GET, PUT `/{id}`, DELETE `/{id}` | Entidad `BodyRegion` |
 | `ClientController` | `/api/v1/clients` | POST, GET, PUT `/{id}`, DELETE `/{id}` | Entidad `ClientProfile` |
 | `ClientRoutineController` | `/api/v1/client-routine` | POST, GET (sin PUT/DELETE) | `ClientRoutineRequest` → `ClientRoutineResponse`; GET devuelve entidades |
@@ -94,14 +94,18 @@ Detectadas con evidencia en el código:
 - **`ClientRoutineController`** no tiene PUT ni DELETE.
 - **Roles no aplicados:** `JwtAuthenticationFilter` extrae el rol del token, pero registra al usuario con `Collections.emptyList()` como permisos, así que cualquier usuario autenticado accede a todo.
 - **Validación:** Bean Validation solo se usa en `LoginRequest`, `RegisterRequest`, pagos y membresías.
-- **Exposición de datos:** `POST /auth/register` devuelve la entidad `User` completa (incluye `passwordHash`).
 - **Pruebas:** solo pagos y membresías tienen pruebas. `CalisthenicsApplicationTests` (`contextLoads`) necesita MySQL en ejecución.
 - **Errores de validación sin formato propio:** `GlobalExceptionHandler` no captura `MethodArgumentNotValidException`; el 400 usa el cuerpo por defecto de Spring, sin indicar qué campo falló.
-- **Sin token responde 403, no 401:** no hay `AuthenticationEntryPoint` configurado en `SecurityConfig`.
+- **Registro público permite elegir rol:** `RegisterRequest.role` se copia tal cual (`AuthService.register`), así que cualquiera puede registrarse como ADMIN en `/auth/register`. Pendiente de decidir: forzar CLIENT o restringir el rol.
+- **Login con `role` null:** `AuthService.login` llama a `user.getRole().name()` sin comprobar null (NPE si el rol no se guardó).
+- **Prueba de regresión para `/error`:** no hay prueba que impida quitar `/error` de `permitAll`; sin ella, un 400 con token válido volvería a salir como 401 (solo se comprobó a mano con servidor real).
 
 ## Decisiones técnicas
 - Autenticación **stateless con JWT**; el token guarda id de usuario y rol. Contraseñas con **BCrypt**.
-- **Clave JWT fuera del código (Fase 4):** `JwtService` la recibe por constructor (`@Value`), valida ≥32 bytes al arrancar (si no, la app no arranca) y construye la `SecretKey` una sola vez. `isTokenValid` devuelve `false` ante tokens caducados, manipulados o mal formados (la petición sigue sin autenticar → 403). La clave antigua (hardcodeada) se considera comprometida.
+- **Clave JWT fuera del código (Fase 4):** `JwtService` la recibe por constructor (`@Value`), valida ≥32 bytes al arrancar (si no, la app no arranca) y construye la `SecretKey` una sola vez. `isTokenValid` devuelve `false` ante tokens caducados, manipulados o mal formados (la petición sigue sin autenticar → 401). La clave antigua (hardcodeada) se considera comprometida.
+- **CORS (Fase 5):** `config/CorsConfig` define el `CorsConfigurationSource`; `SecurityConfig` lo activa con `.cors(...)`. Orígenes en `cors.allowed-origins` (por defecto `http://localhost:5173`, varios separados por coma). Métodos GET, POST, PUT, DELETE, OPTIONS; cabeceras `Authorization` y `Content-Type`; sin credenciales (autenticación solo Bearer).
+- **401 sin token o con token inválido (Fase 5):** `security/JsonAuthenticationEntryPoint` responde 401 con `ErrorResponse` en JSON. `/auth/**` y `/error` son públicos; `/error` debe serlo para que los errores de la app (400, 404) no se conviertan en 401.
+- **Login (Fase 5):** devuelve `LoginResponse` {token, role, userId} en JSON, para que el frontend conozca el rol sin decodificar el JWT.
 - **Inyección de dependencias por constructor** (campos `private final`).
 - Entidades con **Lombok**; relaciones `FetchType.LAZY`; enums con `EnumType.STRING`.
 - Errores centralizados en `GlobalExceptionHandler`.
@@ -119,3 +123,4 @@ Detectadas con evidencia en el código:
 - **2026-11-25 (Fase 2, ciclo developer → verifier):** validación en pagos (`@NotNull` en userId, clientMembershipId, amount, paymentDate; `@Positive` en amount; `@Valid` en create/update). 37/37 pruebas (12 nuevas de 400 Bad Request).
 - **2026-11-25 (Fase 3):** CRUD de membresías: `MembershipPlanController`/`Service`/`Repository` y `ClientMembershipController`/`Service` con sus DTOs; `MembershipPlan` pasa a Lombok y `@Table(name = "membership_plan")`; nueva `ConflictException` (409); validación membresía↔usuario en `ClientPaymentService`. Ciclo developer → verifier: ⚠️ (reasignación con pagos y límites de columna en `MembershipPlanRequest`: `@Size(max=100)`, `@Digits(6,2)`) → corregido → ✅. 122/122 pruebas. Ejecutar: `./mvnw test -Dtest="MembershipPlan*Test,ClientMembership*Test,ClientPayment*Test"`.
 - **2026-11-25 (Fase 4):** clave JWT sacada del código (`jwt.secret` / `JWT_SECRET`), expiración configurable (`jwt.expiration-ms`), tokens inválidos → `false` en vez de excepción. `application-example.properties` versionado (excepción en `.gitignore`), README con cómo generar y definir `JWT_SECRET`. Ciclo developer → verifier: ⚠️ (README recomendaba `Get-Random`, no seguro → corregido con `RandomNumberGenerator`). 129/129 pruebas (7 nuevas en `JwtServiceTest`).
+- **2026-11-26 (Fase 5, preparación para el frontend):** CORS configurable (`config/CorsConfig`), login en JSON `LoginResponse` {token, role, userId}, 401 en JSON para peticiones sin token o con token inválido (`security/JsonAuthenticationEntryPoint`), `UserResponse` sin `passwordHash` en `/auth/register`, `@Valid` en login y register. Ciclo developer → verifier: ❌ (`/error` no era público: un 400 con token válido salía como 401; faltaban pruebas de CORS y de token inválido) → corregido → ⚠️ no bloqueante (falta prueba de regresión para `/error`). Pruebas nuevas: `AuthControllerTest` (8) y `AuthServiceTest` (3). Suite: 141 pruebas, 140 OK; `CalisthenicsApplicationTests.contextLoads` falla solo porque MySQL no está levantado. Ejecutar: `./mvnw test -Dtest="AuthControllerTest,AuthServiceTest"`.

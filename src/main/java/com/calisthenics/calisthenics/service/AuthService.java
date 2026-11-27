@@ -1,6 +1,7 @@
 package com.calisthenics.calisthenics.service;
 
 import com.calisthenics.calisthenics.dto.LoginRequest;
+import com.calisthenics.calisthenics.dto.LoginResponse;
 import com.calisthenics.calisthenics.dto.RegisterRequest;
 import com.calisthenics.calisthenics.model.User;
 import com.calisthenics.calisthenics.repository.UserRepository;
@@ -55,7 +56,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
-    public String login(LoginRequest request){
+    public LoginResponse login(LoginRequest request){
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -67,6 +68,8 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow();
 
-        return jwtService.generateToken(user.getId(), user.getRole().name());
+        String token = jwtService.generateToken(user.getId(), user.getRole().name());
+
+        return new LoginResponse(token, user.getRole().name(), user.getId());
     }
 }
