@@ -3,7 +3,9 @@ package com.calisthenics.calisthenics.service;
 import com.calisthenics.calisthenics.dto.LoginRequest;
 import com.calisthenics.calisthenics.dto.LoginResponse;
 import com.calisthenics.calisthenics.dto.RegisterRequest;
+import com.calisthenics.calisthenics.exception.ConflictException;
 import com.calisthenics.calisthenics.model.User;
+import com.calisthenics.calisthenics.model.catalogs.Role;
 import com.calisthenics.calisthenics.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,14 +31,13 @@ public class AuthService {
     }
 
     public User register(RegisterRequest request){
-        //validate duplicate email
-        if(userRepository.findByEmail(request.getEmail()).isPresent()){
-            throw new IllegalArgumentException("Email already registered");
+        //same rule and order as UserService.create (duplicates -> 409)
+        if(userRepository.findByUsername(request.getUsername()).isPresent()){
+            throw new ConflictException("Username already exists");
         }
 
-        //validate duplicate username
-        if(userRepository.findByUsername(request.getUsername()).isPresent()){
-            throw new IllegalArgumentException("Username already exists");
+        if(userRepository.findByEmail(request.getEmail()).isPresent()){
+            throw new ConflictException("Email already registered");
         }
 
         User user = new User();
@@ -48,7 +49,7 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
-        user.setRole(request.getRole());
+        user.setRole(Role.CLIENT); // el registro público siempre crea CLIENT; se ignora el rol enviado
         user.setActive(true);
 
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));

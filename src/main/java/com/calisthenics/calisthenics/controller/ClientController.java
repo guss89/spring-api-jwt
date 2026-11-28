@@ -1,8 +1,12 @@
 package com.calisthenics.calisthenics.controller;
 
-import com.calisthenics.calisthenics.model.ClientProfile;
+import com.calisthenics.calisthenics.dto.ClientProfileRequest;
+import com.calisthenics.calisthenics.dto.ClientProfileResponse;
+import com.calisthenics.calisthenics.security.CurrentUser;
 import com.calisthenics.calisthenics.service.ClientProfileService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,16 +19,24 @@ public class ClientController {
     public ClientController(ClientProfileService service) { this.service = service; }
 
     @PostMapping
-    public ClientProfile create(@RequestBody ClientProfile clientProfile){
-        return this.service.save(clientProfile);
+    public ClientProfileResponse create(@Valid @RequestBody ClientProfileRequest request){
+        return this.service.save(request);
     }
 
     @GetMapping
-    public List<ClientProfile> getAll(){ return this.service.getAll(); }
+    public List<ClientProfileResponse> getAll(Authentication authentication){
+        return this.service.getAll(CurrentUser.from(authentication));
+    }
+
+    @GetMapping("/{id}")
+    public ClientProfileResponse getById(@PathVariable Long id, Authentication authentication){
+        return this.service.getById(id, CurrentUser.from(authentication));
+    }
 
     @PutMapping("/{id}")
-    public ClientProfile update(@PathVariable Long id, @RequestBody ClientProfile clientProfile){
-        return service.update(id, clientProfile);
+    public ClientProfileResponse update(@PathVariable Long id, @Valid @RequestBody ClientProfileRequest request,
+                                        Authentication authentication){
+        return service.update(id, request, CurrentUser.from(authentication));
     }
 
     @DeleteMapping("/{id}")

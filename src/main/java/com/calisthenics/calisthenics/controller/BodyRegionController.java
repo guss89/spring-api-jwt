@@ -1,7 +1,9 @@
 package com.calisthenics.calisthenics.controller;
 
-import com.calisthenics.calisthenics.model.BodyRegion;
+import com.calisthenics.calisthenics.dto.BodyRegionRequest;
+import com.calisthenics.calisthenics.dto.BodyRegionResponse;
 import com.calisthenics.calisthenics.service.BodyRegionService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,23 +19,23 @@ public class BodyRegionController {
     }
 
     @PostMapping
-    public BodyRegion create(@RequestBody BodyRegion bodyRegion){
-        return  service.save(bodyRegion);
+    public BodyRegionResponse create(@Valid @RequestBody BodyRegionRequest request){
+        return service.save(request);
     }
 
     @GetMapping
-    public List<BodyRegion> getAll(){
+    public List<BodyRegionResponse> getAll(){
         return service.getAll();
     }
 
     @PutMapping("/{id}")
-    public BodyRegion update(@PathVariable Long id, @RequestBody BodyRegion bodyRegion){
-        return service.update(id, bodyRegion);
+    public BodyRegionResponse update(@PathVariable Long id, @Valid @RequestBody BodyRegionRequest request){
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete (@PathVariable Long id){
+    public ResponseEntity<Void> delete(@PathVariable Long id){
         service.delete(id);
-        return  ResponseEntity.noContent().build();
+        return ResponseEntity.noContent().build();
     }
 }

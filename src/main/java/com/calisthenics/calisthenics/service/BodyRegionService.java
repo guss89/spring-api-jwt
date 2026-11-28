@@ -1,5 +1,7 @@
 package com.calisthenics.calisthenics.service;
 
+import com.calisthenics.calisthenics.dto.BodyRegionRequest;
+import com.calisthenics.calisthenics.dto.BodyRegionResponse;
 import com.calisthenics.calisthenics.exception.ResourceNotFoundException;
 import com.calisthenics.calisthenics.model.BodyRegion;
 import com.calisthenics.calisthenics.repository.BodyRegionRepository;
@@ -16,12 +18,14 @@ public class BodyRegionService {
         this.repository = repository;
     }
 
-    public BodyRegion save( BodyRegion bodyRegion){
-        return this.repository.save(bodyRegion);
+    public BodyRegionResponse save(BodyRegionRequest request){
+        BodyRegion bodyRegion = new BodyRegion();
+        bodyRegion.setName(request.getName());
+        return BodyRegionResponse.from(this.repository.save(bodyRegion));
     }
 
-    public List<BodyRegion> getAll(){
-        return repository.findAll();
+    public List<BodyRegionResponse> getAll(){
+        return repository.findAll().stream().map(BodyRegionResponse::from).toList();
     }
 
     public BodyRegion findById(Long id){
@@ -29,10 +33,10 @@ public class BodyRegionService {
                 .orElseThrow(()-> new ResourceNotFoundException("BodyRegion not found"));
     }
 
-    public BodyRegion update( Long id, BodyRegion bodyRegion){
+    public BodyRegionResponse update(Long id, BodyRegionRequest request){
         BodyRegion existing = findById(id);
-        existing.setName(bodyRegion.getName());
-        return  repository.save(existing);
+        existing.setName(request.getName());
+        return BodyRegionResponse.from(repository.save(existing));
     }
 
     public void delete(Long id){

@@ -66,6 +66,19 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_usuarioDesactivado_propagaDisabledExceptionYNoGeneraToken() throws Exception {
+        when(authenticationManager.authenticate(any()))
+                .thenThrow(new org.springframework.security.authentication.DisabledException("User is disabled"));
+
+        LoginRequest request = new ObjectMapper()
+                .readValue("{\"email\":\"a@b.com\",\"password\":\"12345678\"}", LoginRequest.class);
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(org.springframework.security.authentication.DisabledException.class);
+        verify(jwtService, never()).generateToken(anyLong(), anyString());
+    }
+
+    @Test
     void register_devuelveUsuarioGuardadoConHashYNoLaPasswordEnClaro() throws Exception {
         RegisterRequest request = new ObjectMapper().readValue(
                 "{\"name\":\"Ana\",\"lastName\":\"Perez\",\"username\":\"anap\",\"email\":\"a@b.com\","
@@ -82,5 +95,50 @@ class AuthServiceTest {
         assertThat(saved.getEmail()).isEqualTo("a@b.com");
         assertThat(saved.getRole()).isEqualTo(Role.CLIENT);
         assertThat(saved.getActive()).isTrue();
+    }
+
+    @Test
+    void register_usernameDuplicado_lanzaConflictYNoGuarda() throws Exception {
+        RegisterRequest request = registerRequest();
+        when(userRepository.findByUsername("anap")).thenReturn(Optional.of(new User()));
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(com.calisthenics.calisthenics.exception.ConflictException.class)
+                .hasMessage("Username already exists");
+        verify(userRepository, never()).findByEmail(any());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void register_emailDuplicado_lanzaConflictYNoGuarda() throws Exception {
+        RegisterRequest request = registerRequest();
+        when(userRepository.findByUsername("anap")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("a@b.com")).thenReturn(Optional.of(new User()));
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(com.calisthenics.calisthenics.exception.ConflictException.class)
+                .hasMessage("Email already registered");
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    private RegisterRequest registerRequest() throws Exception {
+        return new ObjectMapper().readValue(
+                "{\"name\":\"Ana\",\"lastName\":\"Perez\",\"username\":\"anap\",\"email\":\"a@b.com\","
+                        + "\"phone\":\"555\",\"password\":\"12345678\"}",
+                RegisterRequest.class);
+    }
+
+    @Test
+    void register_ignoraElRolEnviadoYForzaClient() throws Exception {
+        RegisterRequest request = new ObjectMapper().readValue(
+                "{\"name\":\"Ana\",\"lastName\":\"Perez\",\"username\":\"anap\",\"email\":\"a@b.com\","
+                        + "\"phone\":\"555\",\"password\":\"12345678\",\"role\":\"ADMIN\"}",
+                RegisterRequest.class);
+        when(userRepository.findByEmail("a@b.com")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("anap")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("12345678")).thenReturn("$hash");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(authService.register(request).getRole()).isEqualTo(Role.CLIENT);
     }
 }

@@ -29,23 +29,19 @@ public class RoutineService {
         routine.setTypeRoutine(typeRoutine);
         routine.setName(request.getName());
 
-        Routine saved = routineRepository.save(routine);
-
-        return new RoutineResponse(
-            saved.getId(),
-            saved.getName(),
-            saved.getTypeRoutine().getId()
-        );
+        return RoutineResponse.from(routineRepository.save(routine));
     }
 
-    public List<Routine> getAll(){ return routineRepository.findAll(); }
+    public List<RoutineResponse> getAll(){
+        return routineRepository.findAll().stream().map(RoutineResponse::from).toList();
+    }
 
     public  Routine findById(Long id){
         return  routineRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Routine not found"));
     }
 
-    public Routine update(Long id, RoutineRequest routineRequest){
+    public RoutineResponse update(Long id, RoutineRequest routineRequest){
         Routine routine = routineRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Routine not found"));
          TypeRoutine typeRoutine = typeRoutineRepository.findById(routineRequest.getTypeRoutineId())
@@ -54,7 +50,7 @@ public class RoutineService {
          routine.setName(routineRequest.getName());
          routine.setTypeRoutine(typeRoutine);
 
-        return routineRepository.save(routine);
+        return RoutineResponse.from(routineRepository.save(routine));
     }
 
     public void delete(Long id){

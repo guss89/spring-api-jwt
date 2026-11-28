@@ -1,5 +1,7 @@
 package com.calisthenics.calisthenics.dto;
 
+import com.calisthenics.calisthenics.model.RoutineExercise;
+
 public class RoutineExerciseResponse {
 
     public Long id;
@@ -25,6 +27,18 @@ public class RoutineExerciseResponse {
         this.bodyRegionId = bodyRegionId;
         this.exerciseId = exerciseId;
         this.routineId = routineId;
+    }
+
+    public static RoutineExerciseResponse from(RoutineExercise re) {
+        return new RoutineExerciseResponse(
+                re.getId(),
+                re.getReps(),
+                re.getRestSeconds(),
+                re.getSets(),
+                re.getBodyRegion().getId(),
+                re.getExercise().getId(),
+                re.getRoutine().getId()
+        );
     }
 
     public Long getId() {

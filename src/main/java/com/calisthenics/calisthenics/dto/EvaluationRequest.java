@@ -1,5 +1,7 @@
 package com.calisthenics.calisthenics.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -8,8 +10,11 @@ public class EvaluationRequest {
     public Long maxReps;
     public BigDecimal maxWeight;
     public String notes;
+    @NotNull
     public LocalDate registerDate;
+    @NotNull
     public Long exerciseId;
+    @NotNull
     public Long userId;
 
     public void setMaxReps(Long maxReps) { this.maxReps = maxReps; }

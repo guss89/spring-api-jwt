@@ -54,6 +54,18 @@ class AuthControllerTest {
     }
 
     @Test
+    void login_usuarioDesactivado_devuelve401ConJsonYSinToken() throws Exception {
+        when(authService.login(any()))
+                .thenThrow(new org.springframework.security.authentication.DisabledException("User is disabled"));
+
+        mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content(LOGIN_BODY))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.token").doesNotExist());
+    }
+
+    @Test
     void register_noExponePasswordHash() throws Exception {
         User user = User.builder().id(3L).name("Ana").lastName("Perez").username("anap")
                 .email("a@b.com").phone("555").passwordHash("$2a$secreto").role(Role.CLIENT)
@@ -68,6 +80,89 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.passwordHash").doesNotExist())
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("secreto"))));
+    }
+
+    @Test
+    void register_duplicado_devuelve409ConJson() throws Exception {
+        when(authService.register(any()))
+                .thenThrow(new com.calisthenics.calisthenics.exception.ConflictException("Email already registered"));
+
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON).content(REGISTER_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Email already registered"));
+    }
+
+    @Test
+    void register_usernameDe30Caracteres_pasaValidacion() throws Exception {
+        when(authService.register(any())).thenReturn(User.builder().id(3L).username("a".repeat(30))
+                .email("a@b.com").role(Role.CLIENT).active(true).build());
+
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBodyWithUsername("a".repeat(30))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void register_usernameDe51Caracteres_devuelve400ConErrorEnUsername() throws Exception {
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBodyWithUsername("a".repeat(51))))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.errors.username").exists());
+    }
+
+    @Test
+    void register_usernameDe50Caracteres_pasaValidacion() throws Exception {
+        when(authService.register(any())).thenReturn(User.builder().id(3L).username("a".repeat(50))
+                .email("a@b.com").role(Role.CLIENT).active(true).build());
+
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBodyWithUsername("a".repeat(50))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void register_usernameDe3Caracteres_devuelve400ConErrorEnUsername() throws Exception {
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBodyWithUsername("abc")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.username").exists());
+    }
+
+    @Test
+    void register_emailDe101Caracteres_devuelve400ConErrorEnEmail() throws Exception {
+        String email = "a".repeat(89) + "@example.com";
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody("anap", email, "12345678")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.email").exists());
+    }
+
+    @Test
+    void register_passwordDe7Caracteres_devuelve400ConErrorEnPassword() throws Exception {
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody("anap", "a@b.com", "1234567")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.password").exists());
+    }
+
+    @Test
+    void register_passwordDe73Caracteres_devuelve400ConErrorEnPassword() throws Exception {
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody("anap", "a@b.com", "a".repeat(73))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.password").exists());
+    }
+
+    private static String registerBodyWithUsername(String username) {
+        return registerBody(username, "a@b.com", "12345678");
+    }
+
+    private static String registerBody(String username, String email, String password) {
+        return "{\"name\":\"Ana\",\"lastName\":\"Perez\",\"username\":\"" + username
+                + "\",\"email\":\"" + email + "\",\"phone\":\"555\",\"password\":\"" + password + "\"}";
     }
 
     @Test

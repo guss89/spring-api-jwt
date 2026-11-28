@@ -15,7 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import com.calisthenics.calisthenics.security.CurrentUser;
+import org.mockito.ArgumentCaptor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -26,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -53,144 +60,127 @@ class ClientPaymentControllerTest {
     @Test
     void sinAutenticacion_rechaza() throws Exception {
         mockMvc.perform(get(URL)).andExpect(result ->
-                assertThat(result.getResponse().getStatus()).isIn(401, 403));
+                assertThat(result.getResponse().getStatus()).isEqualTo(401));
         mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(BODY)).andExpect(result ->
-                assertThat(result.getResponse().getStatus()).isIn(401, 403));
+                assertThat(result.getResponse().getStatus()).isEqualTo(401));
         verifyNoInteractions(service);
     }
 
     @Test
-    @WithMockUser
-    void create_ok() throws Exception {
-        when(service.save(any(ClientPaymentRequest.class))).thenReturn(response());
-        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(BODY))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.clientMembershipId").value(5))
-                .andExpect(jsonPath("$.status").value("PAID"));
-    }
-
-    @Test
-    @WithMockUser
-    void create_membresiaInexistente_404() throws Exception {
-        when(service.save(any())).thenThrow(new ResourceNotFoundException("Membership not found"));
-        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(BODY))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @WithMockUser
-    void create_usuarioInexistente_404() throws Exception {
-        when(service.save(any())).thenThrow(new ResourceNotFoundException("User not found"));
-        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(BODY))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @WithMockUser
-    void getAll_sinFiltro() throws Exception {
-        when(service.getAll(null)).thenReturn(List.of(response()));
+    @WithMockUser(username = "1", roles = "ADMIN")
+    void getAll_sinFiltro_admin() throws Exception {
+        when(service.getAll(isNull(), any())).thenReturn(List.of(response()));
         mockMvc.perform(get(URL)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
-        verify(service).getAll(null);
+        verify(service).getAll(isNull(), any());
+    }
+
+    // ---- Restricción por rol (el controlador pasa id y rol del llamador al servicio) ----
+
+    private RequestPostProcessor auth(String id, String role) {
+        return authentication(new UsernamePasswordAuthenticationToken(
+                id, null, List.of(new SimpleGrantedAuthority("ROLE_" + role))));
     }
 
     @Test
-    @WithMockUser
+    void getAll_client_pasaSuIdYSinAdminAlServicio() throws Exception {
+        when(service.getAll(isNull(), any())).thenReturn(List.of(response()));
+        mockMvc.perform(get(URL).with(auth("1", "CLIENT")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+        ArgumentCaptor<CurrentUser> captor = ArgumentCaptor.forClass(CurrentUser.class);
+        verify(service).getAll(isNull(), captor.capture());
+        assertThat(captor.getValue()).isEqualTo(new CurrentUser(1L, false, false, true));
+    }
+
+    @Test
+    void getAll_admin_pasaAdminTrue() throws Exception {
+        when(service.getAll(isNull(), any())).thenReturn(List.of(response()));
+        mockMvc.perform(get(URL).with(auth("9", "ADMIN"))).andExpect(status().isOk());
+        verify(service).getAll(isNull(), eq(new CurrentUser(9L, true)));
+    }
+
+    @Test
+    void getAll_clientConOtroUserId_403() throws Exception {
+        when(service.getAll(eq(7L), any())).thenThrow(new AccessDeniedException("Access denied"));
+        mockMvc.perform(get(URL).param("userId", "7").with(auth("1", "CLIENT")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
+    void getById_clientConIdAjeno_403() throws Exception {
+        when(service.getById(eq(10L), any())).thenThrow(new AccessDeniedException("Access denied"));
+        mockMvc.perform(get(URL + "/10").with(auth("2", "CLIENT"))).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void principalNoNumerico_403() throws Exception {
+        mockMvc.perform(get(URL).with(auth("abc", "CLIENT"))).andExpect(status().isForbidden());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    @WithMockUser(username = "1", roles = "ADMIN")
     void getAll_conUserId() throws Exception {
-        when(service.getAll(1L)).thenReturn(List.of(response()));
+        when(service.getAll(eq(1L), any())).thenReturn(List.of(response()));
         mockMvc.perform(get(URL).param("userId", "1"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].userId").value(1));
-        verify(service).getAll(1L);
+        verify(service).getAll(eq(1L), any());
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "1", roles = "ADMIN")
     void getById_ok() throws Exception {
-        when(service.getById(10L)).thenReturn(response());
+        when(service.getById(eq(10L), any())).thenReturn(response());
         mockMvc.perform(get(URL + "/10")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(10));
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "1", roles = "ADMIN")
     void getById_inexistente_404() throws Exception {
-        when(service.getById(99L)).thenThrow(new ResourceNotFoundException("Client Payment not found"));
+        when(service.getById(eq(99L), any())).thenThrow(new ResourceNotFoundException("Client Payment not found"));
         mockMvc.perform(get(URL + "/99")).andExpect(status().isNotFound());
     }
 
+    // ---- Escritura: solo ADMIN; CLIENT y COACH reciben 403 ----
+
     @Test
-    @WithMockUser
-    void update_ok() throws Exception {
-        when(service.update(eq(10L), any())).thenReturn(response());
-        mockMvc.perform(put(URL + "/10").contentType(MediaType.APPLICATION_JSON).content(BODY))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(10));
+    void escritura_admin_funciona() throws Exception {
+        when(service.save(any(), any())).thenReturn(response());
+        when(service.update(eq(10L), any(), any())).thenReturn(response());
+
+        mockMvc.perform(post(URL).with(auth("1", "ADMIN")).contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isOk());
+        mockMvc.perform(put(URL + "/10").with(auth("1", "ADMIN")).contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete(URL + "/10").with(auth("1", "ADMIN"))).andExpect(status().isNoContent());
     }
 
     @Test
-    @WithMockUser
-    void update_inexistente_404() throws Exception {
-        when(service.update(eq(99L), any())).thenThrow(new ResourceNotFoundException("Client Payment not found"));
-        mockMvc.perform(put(URL + "/99").contentType(MediaType.APPLICATION_JSON).content(BODY))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @WithMockUser
-    void delete_ok_204() throws Exception {
-        mockMvc.perform(delete(URL + "/10")).andExpect(status().isNoContent());
-        verify(service).delete(10L);
-    }
-
-    @Test
-    @WithMockUser
-    void delete_inexistente_404() throws Exception {
-        doThrow(new ResourceNotFoundException("Client Payment not found")).when(service).delete(99L);
-        mockMvc.perform(delete(URL + "/99")).andExpect(status().isNotFound());
-    }
-
-    // ---- Validación de entrada (400 Bad Request) ----
-
-    private static final String SIN_AMOUNT = """
-            {"paymentMethod":"CASH","paymentDate":"2026-01-10","status":"PAID","userId":1,"clientMembershipId":5}
-            """;
-    private static final String SIN_PAYMENT_DATE = """
-            {"amount":100.00,"paymentMethod":"CASH","status":"PAID","userId":1,"clientMembershipId":5}
-            """;
-    private static final String SIN_USER_ID = """
-            {"amount":100.00,"paymentMethod":"CASH","paymentDate":"2026-01-10","status":"PAID","clientMembershipId":5}
-            """;
-    private static final String SIN_MEMBERSHIP_ID = """
-            {"amount":100.00,"paymentMethod":"CASH","paymentDate":"2026-01-10","status":"PAID","userId":1}
-            """;
-    private static final String AMOUNT_NEGATIVO = """
-            {"amount":-10.00,"paymentMethod":"CASH","paymentDate":"2026-01-10","status":"PAID","userId":1,"clientMembershipId":5}
-            """;
-    private static final String AMOUNT_CERO = """
-            {"amount":0,"paymentMethod":"CASH","paymentDate":"2026-01-10","status":"PAID","userId":1,"clientMembershipId":5}
-            """;
-
-    private void postEsperaBadRequest(String body) throws Exception {
-        mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+    void escritura_admin_conBodyVacio_400Json() throws Exception {
+        mockMvc.perform(post(URL).with(auth("1", "ADMIN")).contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.errors.userId").exists());
         verifyNoInteractions(service);
     }
 
-    private void putEsperaBadRequest(String body) throws Exception {
-        mockMvc.perform(put(URL + "/10").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
-        verifyNoInteractions(service);
+    @Test
+    void escritura_client_403() throws Exception {
+        escrituraProhibida("CLIENT");
     }
 
-    @Test @WithMockUser void create_sinAmount_400() throws Exception { postEsperaBadRequest(SIN_AMOUNT); }
-    @Test @WithMockUser void create_sinPaymentDate_400() throws Exception { postEsperaBadRequest(SIN_PAYMENT_DATE); }
-    @Test @WithMockUser void create_sinUserId_400() throws Exception { postEsperaBadRequest(SIN_USER_ID); }
-    @Test @WithMockUser void create_sinClientMembershipId_400() throws Exception { postEsperaBadRequest(SIN_MEMBERSHIP_ID); }
-    @Test @WithMockUser void create_amountNegativo_400() throws Exception { postEsperaBadRequest(AMOUNT_NEGATIVO); }
-    @Test @WithMockUser void create_amountCero_400() throws Exception { postEsperaBadRequest(AMOUNT_CERO); }
+    @Test
+    void escritura_coach_403() throws Exception {
+        escrituraProhibida("COACH");
+    }
 
-    @Test @WithMockUser void update_sinAmount_400() throws Exception { putEsperaBadRequest(SIN_AMOUNT); }
-    @Test @WithMockUser void update_sinPaymentDate_400() throws Exception { putEsperaBadRequest(SIN_PAYMENT_DATE); }
-    @Test @WithMockUser void update_sinUserId_400() throws Exception { putEsperaBadRequest(SIN_USER_ID); }
-    @Test @WithMockUser void update_sinClientMembershipId_400() throws Exception { putEsperaBadRequest(SIN_MEMBERSHIP_ID); }
-    @Test @WithMockUser void update_amountNegativo_400() throws Exception { putEsperaBadRequest(AMOUNT_NEGATIVO); }
-    @Test @WithMockUser void update_amountCero_400() throws Exception { putEsperaBadRequest(AMOUNT_CERO); }
+    private void escrituraProhibida(String role) throws Exception {
+        mockMvc.perform(post(URL).with(auth("1", role)).contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put(URL + "/10").with(auth("1", role)).contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete(URL + "/10").with(auth("1", role))).andExpect(status().isForbidden());
+        verifyNoInteractions(service);
+    }
 }

@@ -33,24 +33,19 @@ public class ExerciseService {
         exercise.setIsWeighted(request.getWeighted());
         exercise.setExerciseCategory(exerciseCategory);
 
-        Exercise saved = exerciseRepository.save(exercise);
-        return new ExerciseResponse(
-                saved.getId(),
-                saved.getName(),
-                saved.getDescription(),
-                saved.getExerciseCategory().getId(),
-                saved.getIsWeighted()
-        );
+        return ExerciseResponse.from(exerciseRepository.save(exercise));
     }
 
-    public List<Exercise> getAll(){ return exerciseRepository.findAll(); }
+    public List<ExerciseResponse> getAll(){
+        return exerciseRepository.findAll().stream().map(ExerciseResponse::from).toList();
+    }
 
     public Exercise findById(Long id){
         return exerciseRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Routine not found"));
     }
 
-    public Exercise update(Long id, ExerciseRequest request){
+    public ExerciseResponse update(Long id, ExerciseRequest request){
         Exercise exercise = exerciseRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Routine not found"));
         ExerciseCategory exerciseCategory = exerciseCategoryRepository.findById(request.getExerciseCategoryId())
@@ -61,7 +56,7 @@ public class ExerciseService {
         exercise.setExerciseCategory(exerciseCategory);
         exercise.setIsWeighted(request.getWeighted());
 
-        return exerciseRepository.save(exercise);
+        return ExerciseResponse.from(exerciseRepository.save(exercise));
     }
 
     public void delete(Long id){

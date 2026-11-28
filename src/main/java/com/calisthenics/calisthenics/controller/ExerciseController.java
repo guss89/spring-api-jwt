@@ -2,7 +2,6 @@ package com.calisthenics.calisthenics.controller;
 
 import com.calisthenics.calisthenics.dto.ExerciseRequest;
 import com.calisthenics.calisthenics.dto.ExerciseResponse;
-import com.calisthenics.calisthenics.model.Exercise;
 import com.calisthenics.calisthenics.service.ExerciseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +18,10 @@ public class ExerciseController {
     public ExerciseResponse create(@RequestBody ExerciseRequest exerciseRequest) {return this.service.save(exerciseRequest);}
 
     @GetMapping
-    public List<Exercise> getAll() {return this.service.getAll(); }
+    public List<ExerciseResponse> getAll() {return this.service.getAll(); }
 
     @PutMapping({"/{id}"})
-    public Exercise update(@PathVariable Long id, @RequestBody ExerciseRequest exerciseRequest){
+    public ExerciseResponse update(@PathVariable Long id, @RequestBody ExerciseRequest exerciseRequest){
         return service.update(id, exerciseRequest);
     }
 

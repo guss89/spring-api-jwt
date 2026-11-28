@@ -1,5 +1,7 @@
 package com.calisthenics.calisthenics.dto;
 
+import com.calisthenics.calisthenics.model.Exercise;
+
 public class ExerciseResponse {
     public Long id;
     public Long exerciseCategoryId;
@@ -19,6 +21,16 @@ public class ExerciseResponse {
         this.description = description;
         this.exerciseCategoryId = exerciseCategoryId;
         this.isWeighted = isWeighted;
+    }
+
+    public static ExerciseResponse from(Exercise exercise) {
+        return new ExerciseResponse(
+                exercise.getId(),
+                exercise.getName(),
+                exercise.getDescription(),
+                exercise.getExerciseCategory().getId(),
+                Boolean.TRUE.equals(exercise.getIsWeighted())
+        );
     }
 
     public Long getExerciseCategoryId(){

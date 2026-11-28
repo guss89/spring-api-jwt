@@ -2,7 +2,6 @@ package com.calisthenics.calisthenics.controller;
 
 import com.calisthenics.calisthenics.dto.RoutineExerciseRequest;
 import com.calisthenics.calisthenics.dto.RoutineExerciseResponse;
-import com.calisthenics.calisthenics.model.RoutineExercise;
 import com.calisthenics.calisthenics.service.RoutineExerciseService;
 import com.calisthenics.calisthenics.service.RoutineService;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +19,10 @@ public class RoutineExerciseController {
     public RoutineExerciseResponse create(@RequestBody RoutineExerciseRequest routineExerciseRequest) { return this.service.save(routineExerciseRequest);}
 
     @GetMapping
-    public List<RoutineExercise> getAll(){ return this.service.getAll(); }
+    public List<RoutineExerciseResponse> getAll(){ return this.service.getAll(); }
 
     @PutMapping("/{id}")
-    public RoutineExercise update(@PathVariable Long id, @RequestBody RoutineExerciseRequest routineExerciseRequest){
+    public RoutineExerciseResponse update(@PathVariable Long id, @RequestBody RoutineExerciseRequest routineExerciseRequest){
         return service.update(id, routineExerciseRequest);
     }
 

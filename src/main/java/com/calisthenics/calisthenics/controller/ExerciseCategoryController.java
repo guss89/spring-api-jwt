@@ -1,7 +1,9 @@
 package com.calisthenics.calisthenics.controller;
 
-import com.calisthenics.calisthenics.model.ExerciseCategory;
+import com.calisthenics.calisthenics.dto.ExerciseCategoryRequest;
+import com.calisthenics.calisthenics.dto.ExerciseCategoryResponse;
 import com.calisthenics.calisthenics.service.ExerciseCategoryService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,7 +12,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/exercise-category")
 public class ExerciseCategoryController {
-
     private final ExerciseCategoryService service;
 
     public ExerciseCategoryController(ExerciseCategoryService service){
@@ -18,18 +19,18 @@ public class ExerciseCategoryController {
     }
 
     @PostMapping
-    public ExerciseCategory create(@RequestBody ExerciseCategory exerciseCategory){
-        return service.save(exerciseCategory);
+    public ExerciseCategoryResponse create(@Valid @RequestBody ExerciseCategoryRequest request){
+        return service.save(request);
     }
 
     @GetMapping
-    public List<ExerciseCategory> getAll(){
+    public List<ExerciseCategoryResponse> getAll(){
         return service.getAll();
     }
 
     @PutMapping("/{id}")
-    public ExerciseCategory update(@PathVariable Long id, @RequestBody ExerciseCategory exerciseCategory){
-        return service.update(id, exerciseCategory);
+    public ExerciseCategoryResponse update(@PathVariable Long id, @Valid @RequestBody ExerciseCategoryRequest request){
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")

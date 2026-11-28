@@ -52,27 +52,19 @@ public class RoutineExerciseService {
         routineExercise.setExercise(exercise);
         routineExercise.setRoutine(routine);
 
-        RoutineExercise saved = routineExerciseRepository.save(routineExercise);
-
-        return new RoutineExerciseResponse(
-                saved.getId(),
-                saved.getReps(),
-                saved.getRestSeconds(),
-                saved.getSets(),
-                saved.getBodyRegion().getId(),
-                saved.getExercise().getId(),
-                saved.getRoutine().getId()
-        );
+        return RoutineExerciseResponse.from(routineExerciseRepository.save(routineExercise));
     }
 
-    public List<RoutineExercise> getAll() { return routineExerciseRepository.findAll(); }
+    public List<RoutineExerciseResponse> getAll() {
+        return routineExerciseRepository.findAll().stream().map(RoutineExerciseResponse::from).toList();
+    }
 
     public RoutineExercise findById(Long id){
         return routineExerciseRepository.findById(id)
                 .orElseThrow(()->new ResourceNotFoundException("Routine exercise not found"));
     }
 
-    public RoutineExercise update(Long id, RoutineExerciseRequest routineExerciseRequest){
+    public RoutineExerciseResponse update(Long id, RoutineExerciseRequest routineExerciseRequest){
         RoutineExercise routineExercise =  findById(id);
 
         BodyRegion bodyRegion = bodyRegionRepository.findById(routineExerciseRequest.getBodyRegionId())
@@ -89,7 +81,7 @@ public class RoutineExerciseService {
         routineExercise.setRoutine(routine);
         routineExercise.setExercise(exercise);
 
-        return routineExerciseRepository.save(routineExercise);
+        return RoutineExerciseResponse.from(routineExerciseRepository.save(routineExercise));
     }
 
     public void delete(Long id){

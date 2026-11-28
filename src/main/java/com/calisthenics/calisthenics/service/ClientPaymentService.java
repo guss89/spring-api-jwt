@@ -9,6 +9,7 @@ import com.calisthenics.calisthenics.model.User;
 import com.calisthenics.calisthenics.repository.ClientMembershipRepository;
 import com.calisthenics.calisthenics.repository.ClientPaymentRepository;
 import com.calisthenics.calisthenics.repository.UserRepository;
+import com.calisthenics.calisthenics.security.CurrentUser;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,7 +30,8 @@ public class ClientPaymentService {
         this.clientMembershipRepository = clientMembershipRepository;
     }
 
-    public ClientPaymentResponse save(ClientPaymentRequest request) {
+    public ClientPaymentResponse save(ClientPaymentRequest request, CurrentUser caller) {
+        caller.requireAccessTo(request.getUserId());
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(()->new ResourceNotFoundException("User not found"));
         ClientMembership clientMembership = clientMembershipRepository.findById(request.getClientMembershipId())
@@ -51,15 +53,25 @@ public class ClientPaymentService {
         return toResponse(saved);
     }
 
-    public List<ClientPaymentResponse> getAll(Long userId){
-        List<ClientPayment> payments = (userId == null)
-                ? clientPaymentRepository.findAll()
-                : clientPaymentRepository.findByUserId(userId);
+    public List<ClientPaymentResponse> getAll(Long userId, CurrentUser caller){
+        List<ClientPayment> payments;
+        if (caller.admin()) {
+            payments = (userId == null)
+                    ? clientPaymentRepository.findAll()
+                    : clientPaymentRepository.findByUserId(userId);
+        } else {
+            if (userId != null) {
+                caller.requireAccessTo(userId);
+            }
+            payments = clientPaymentRepository.findByUserId(caller.id());
+        }
         return payments.stream().map(this::toResponse).toList();
     }
 
-    public ClientPaymentResponse getById(Long id){
-        return toResponse(findById(id));
+    public ClientPaymentResponse getById(Long id, CurrentUser caller){
+        ClientPayment clientPayment = findById(id);
+        requireAccess(clientPayment, caller);
+        return toResponse(clientPayment);
     }
 
     public ClientPayment findById(Long id){
@@ -67,8 +79,10 @@ public class ClientPaymentService {
                 .orElseThrow(()->new ResourceNotFoundException("Client Payment not found"));
     }
 
-    public ClientPaymentResponse update(Long id, ClientPaymentRequest request){
+    public ClientPaymentResponse update(Long id, ClientPaymentRequest request, CurrentUser caller){
         ClientPayment clientPayment = findById(id);
+        requireAccess(clientPayment, caller);
+        caller.requireAccessTo(request.getUserId());
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(()->new ResourceNotFoundException("User not found"));
 
@@ -90,9 +104,14 @@ public class ClientPaymentService {
         return toResponse(clientPaymentRepository.save(clientPayment));
     }
 
-    public void delete(Long id){
+    public void delete(Long id, CurrentUser caller){
         ClientPayment clientPayment = findById(id);
+        requireAccess(clientPayment, caller);
         clientPaymentRepository.delete(clientPayment);
+    }
+
+    private void requireAccess(ClientPayment clientPayment, CurrentUser caller){
+        caller.requireAccessTo(clientPayment.getUser().getId());
     }
 
     private void validateMembershipOwner(ClientMembership clientMembership, User user){

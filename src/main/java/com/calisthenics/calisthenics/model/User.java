@@ -1,6 +1,7 @@
 package com.calisthenics.calisthenics.model;
 
 import com.calisthenics.calisthenics.model.catalogs.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @JsonIgnore
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

@@ -1,11 +1,16 @@
 package com.calisthenics.calisthenics.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
 
 public class ClientRoutineRequest {
     public Long id;
+    @NotNull
     public Long userId;
+    @NotNull
     public Long routineId;
+    @NotNull
     public LocalDate startDate;
     public LocalDate endDate;
     public String observations;

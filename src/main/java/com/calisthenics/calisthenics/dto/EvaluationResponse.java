@@ -1,5 +1,6 @@
 package com.calisthenics.calisthenics.dto;
 
+import com.calisthenics.calisthenics.model.Evaluation;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -19,4 +20,9 @@ public class EvaluationResponse {
     private Long exerciseId;
     private Long userId;
 
+    public static EvaluationResponse from(Evaluation evaluation) {
+        return new EvaluationResponse(evaluation.getId(), evaluation.getMaxReps(), evaluation.getMaxWeight(),
+                evaluation.getNotes(), evaluation.getRegisterDate(), evaluation.getExercise().getId(),
+                evaluation.getUser().getId());
+    }
 }

@@ -2,8 +2,11 @@ package com.calisthenics.calisthenics.controller;
 
 import com.calisthenics.calisthenics.dto.ClientRoutineRequest;
 import com.calisthenics.calisthenics.dto.ClientRoutineResponse;
-import com.calisthenics.calisthenics.model.ClientRoutine;
+import com.calisthenics.calisthenics.security.CurrentUser;
 import com.calisthenics.calisthenics.service.ClientRoutineService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,9 +20,27 @@ public class ClientRoutineController {
     }
 
     @PostMapping
-    public ClientRoutineResponse create(@RequestBody ClientRoutineRequest clientRoutineRequest) { return this.service.save(clientRoutineRequest); }
+    public ClientRoutineResponse create(@Valid @RequestBody ClientRoutineRequest clientRoutineRequest) { return this.service.save(clientRoutineRequest); }
+
+    @GetMapping("/{id}")
+    public ClientRoutineResponse getById(@PathVariable Long id, Authentication authentication){
+        return this.service.getById(id, CurrentUser.from(authentication));
+    }
+
+    @PutMapping("/{id}")
+    public ClientRoutineResponse update(@PathVariable Long id, @Valid @RequestBody ClientRoutineRequest clientRoutineRequest){
+        return this.service.update(id, clientRoutineRequest);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id){
+        this.service.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping
-    public List<ClientRoutine> getAll(){ return this.service.getAll(); }
+    public List<ClientRoutineResponse> getAll(Authentication authentication){
+        return this.service.getAll(CurrentUser.from(authentication));
+    }
 
 }

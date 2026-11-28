@@ -1,5 +1,7 @@
 package com.calisthenics.calisthenics.service;
 
+import com.calisthenics.calisthenics.dto.TypeRoutineRequest;
+import com.calisthenics.calisthenics.dto.TypeRoutineResponse;
 import com.calisthenics.calisthenics.exception.ResourceNotFoundException;
 import com.calisthenics.calisthenics.model.TypeRoutine;
 import com.calisthenics.calisthenics.repository.TypeRoutineRepository;
@@ -16,12 +18,14 @@ public class TypeRoutineService {
         this.repository = repository;
     }
 
-    public TypeRoutine save(TypeRoutine typeRoutine){
-        return repository.save(typeRoutine);
+    public TypeRoutineResponse save(TypeRoutineRequest request){
+        TypeRoutine typeRoutine = new TypeRoutine();
+        typeRoutine.setName(request.getName());
+        return TypeRoutineResponse.from(repository.save(typeRoutine));
     }
 
-    public List<TypeRoutine> getAll(){
-        return repository.findAll();
+    public List<TypeRoutineResponse> getAll(){
+        return repository.findAll().stream().map(TypeRoutineResponse::from).toList();
     }
 
     public TypeRoutine findById(Long id){
@@ -29,11 +33,11 @@ public class TypeRoutineService {
                 .orElseThrow(()->new ResourceNotFoundException("Type Routine not found"));
     }
 
-    public TypeRoutine update(Long id, TypeRoutine typeRoutine){
+    public TypeRoutineResponse update(Long id, TypeRoutineRequest request){
         TypeRoutine existing = findById(id);
-        existing.setName(typeRoutine.getName());
+        existing.setName(request.getName());
 
-        return repository.save(existing);
+        return TypeRoutineResponse.from(repository.save(existing));
     }
 
     public void delete(Long id){

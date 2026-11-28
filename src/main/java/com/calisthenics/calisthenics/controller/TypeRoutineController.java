@@ -1,7 +1,9 @@
 package com.calisthenics.calisthenics.controller;
 
-import com.calisthenics.calisthenics.model.TypeRoutine;
+import com.calisthenics.calisthenics.dto.TypeRoutineRequest;
+import com.calisthenics.calisthenics.dto.TypeRoutineResponse;
 import com.calisthenics.calisthenics.service.TypeRoutineService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +19,18 @@ public class TypeRoutineController {
     }
 
     @PostMapping
-    public TypeRoutine create(@RequestBody TypeRoutine typeRoutine){
-        return this.service.save(typeRoutine);
+    public TypeRoutineResponse create(@Valid @RequestBody TypeRoutineRequest request){
+        return service.save(request);
     }
 
     @GetMapping
-    public List<TypeRoutine> getAll(){
-        return this.service.getAll();
+    public List<TypeRoutineResponse> getAll(){
+        return service.getAll();
     }
 
     @PutMapping("/{id}")
-    public TypeRoutine update(@PathVariable Long id, @RequestBody TypeRoutine typeRoutine){
-        return service.update(id, typeRoutine);
+    public TypeRoutineResponse update(@PathVariable Long id, @Valid @RequestBody TypeRoutineRequest request){
+        return service.update(id, request);
     }
 
     @DeleteMapping("/{id}")

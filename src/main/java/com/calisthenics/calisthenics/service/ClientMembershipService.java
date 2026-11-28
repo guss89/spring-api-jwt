@@ -13,6 +13,7 @@ import com.calisthenics.calisthenics.repository.ClientMembershipRepository;
 import com.calisthenics.calisthenics.repository.ClientPaymentRepository;
 import com.calisthenics.calisthenics.repository.MembershipPlanRepository;
 import com.calisthenics.calisthenics.repository.UserRepository;
+import com.calisthenics.calisthenics.security.CurrentUser;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -37,7 +38,8 @@ public class ClientMembershipService {
         this.clientPaymentRepository = clientPaymentRepository;
     }
 
-    public ClientMembershipResponse save(ClientMembershipRequest request) {
+    public ClientMembershipResponse save(ClientMembershipRequest request, CurrentUser caller) {
+        caller.requireAccessTo(request.getUserId());
         User user = findClient(request.getUserId());
         MembershipPlan plan = findPlan(request.getMembershipPlanId());
         MembershipStatus status = request.getStatus() != null ? request.getStatus() : MembershipStatus.ACTIVE;
@@ -57,19 +59,31 @@ public class ClientMembershipService {
         return toResponse(clientMembershipRepository.save(membership));
     }
 
-    public List<ClientMembershipResponse> getAll(Long userId) {
-        List<ClientMembership> memberships = (userId == null)
-                ? clientMembershipRepository.findAll()
-                : clientMembershipRepository.findByUserId(userId);
+    public List<ClientMembershipResponse> getAll(Long userId, CurrentUser caller) {
+        List<ClientMembership> memberships;
+        if (caller.admin()) {
+            memberships = (userId == null)
+                    ? clientMembershipRepository.findAll()
+                    : clientMembershipRepository.findByUserId(userId);
+        } else {
+            if (userId != null) {
+                caller.requireAccessTo(userId);
+            }
+            memberships = clientMembershipRepository.findByUserId(caller.id());
+        }
         return memberships.stream().map(this::toResponse).toList();
     }
 
-    public ClientMembershipResponse getById(Long id) {
-        return toResponse(findById(id));
+    public ClientMembershipResponse getById(Long id, CurrentUser caller) {
+        ClientMembership membership = findById(id);
+        caller.requireAccessTo(membership.getUser().getId());
+        return toResponse(membership);
     }
 
-    public ClientMembershipResponse update(Long id, ClientMembershipRequest request) {
+    public ClientMembershipResponse update(Long id, ClientMembershipRequest request, CurrentUser caller) {
         ClientMembership membership = findById(id);
+        caller.requireAccessTo(membership.getUser().getId());
+        caller.requireAccessTo(request.getUserId());
         User user = findClient(request.getUserId());
         MembershipPlan plan = findPlan(request.getMembershipPlanId());
         MembershipStatus status = request.getStatus() != null ? request.getStatus() : membership.getStatus();
@@ -94,8 +108,9 @@ public class ClientMembershipService {
         return toResponse(clientMembershipRepository.save(membership));
     }
 
-    public void delete(Long id) {
+    public void delete(Long id, CurrentUser caller) {
         ClientMembership membership = findById(id);
+        caller.requireAccessTo(membership.getUser().getId());
         if (clientPaymentRepository.existsByClientMembershipId(id)) {
             throw new ConflictException("Membership has associated payments");
         }

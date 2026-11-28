@@ -57,7 +57,7 @@ class MembershipPlanControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void create_ok() throws Exception {
         when(service.save(any(MembershipPlanRequest.class))).thenReturn(response());
         mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(BODY))
@@ -68,28 +68,28 @@ class MembershipPlanControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void getAll_ok() throws Exception {
         when(service.getAll()).thenReturn(List.of(response()));
         mockMvc.perform(get(URL)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void getById_ok() throws Exception {
         when(service.getById(1L)).thenReturn(response());
         mockMvc.perform(get(URL + "/1")).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1));
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void getById_inexistente_404() throws Exception {
         when(service.getById(99L)).thenThrow(new ResourceNotFoundException("Membership plan not found"));
         mockMvc.perform(get(URL + "/99")).andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void update_ok() throws Exception {
         when(service.update(eq(1L), any())).thenReturn(response());
         mockMvc.perform(put(URL + "/1").contentType(MediaType.APPLICATION_JSON).content(BODY))
@@ -97,7 +97,7 @@ class MembershipPlanControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void update_inexistente_404() throws Exception {
         when(service.update(eq(99L), any())).thenThrow(new ResourceNotFoundException("Membership plan not found"));
         mockMvc.perform(put(URL + "/99").contentType(MediaType.APPLICATION_JSON).content(BODY))
@@ -105,21 +105,21 @@ class MembershipPlanControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void delete_ok_204() throws Exception {
         mockMvc.perform(delete(URL + "/1")).andExpect(status().isNoContent());
         verify(service).delete(1L);
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void delete_inexistente_404() throws Exception {
         doThrow(new ResourceNotFoundException("Membership plan not found")).when(service).delete(99L);
         mockMvc.perform(delete(URL + "/99")).andExpect(status().isNotFound());
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void delete_conMembresiasAsociadas_409() throws Exception {
         doThrow(new ConflictException("Membership plan has associated memberships")).when(service).delete(1L);
         mockMvc.perform(delete(URL + "/1"))
@@ -176,25 +176,25 @@ class MembershipPlanControllerTest {
             {"name":"Mensual","price":10.123,"durationDays":30}
             """;
 
-    @Test @WithMockUser void create_nameDe101Caracteres_400() throws Exception { postEsperaBadRequest(NAME_LARGO); }
-    @Test @WithMockUser void create_priceUnMillon_400() throws Exception { postEsperaBadRequest(PRICE_ENTEROS_EXCESO); }
-    @Test @WithMockUser void create_priceTresDecimales_400() throws Exception { postEsperaBadRequest(PRICE_TRES_DECIMALES); }
-    @Test @WithMockUser void update_nameDe101Caracteres_400() throws Exception { putEsperaBadRequest(NAME_LARGO); }
-    @Test @WithMockUser void update_priceUnMillon_400() throws Exception { putEsperaBadRequest(PRICE_ENTEROS_EXCESO); }
-    @Test @WithMockUser void update_priceTresDecimales_400() throws Exception { putEsperaBadRequest(PRICE_TRES_DECIMALES); }
+    @Test @WithMockUser(roles = "ADMIN") void create_nameDe101Caracteres_400() throws Exception { postEsperaBadRequest(NAME_LARGO); }
+    @Test @WithMockUser(roles = "ADMIN") void create_priceUnMillon_400() throws Exception { postEsperaBadRequest(PRICE_ENTEROS_EXCESO); }
+    @Test @WithMockUser(roles = "ADMIN") void create_priceTresDecimales_400() throws Exception { postEsperaBadRequest(PRICE_TRES_DECIMALES); }
+    @Test @WithMockUser(roles = "ADMIN") void update_nameDe101Caracteres_400() throws Exception { putEsperaBadRequest(NAME_LARGO); }
+    @Test @WithMockUser(roles = "ADMIN") void update_priceUnMillon_400() throws Exception { putEsperaBadRequest(PRICE_ENTEROS_EXCESO); }
+    @Test @WithMockUser(roles = "ADMIN") void update_priceTresDecimales_400() throws Exception { putEsperaBadRequest(PRICE_TRES_DECIMALES); }
 
-    @Test @WithMockUser void create_sinName_400() throws Exception { postEsperaBadRequest(SIN_NAME); }
-    @Test @WithMockUser void create_nameVacio_400() throws Exception { postEsperaBadRequest(NAME_VACIO); }
-    @Test @WithMockUser void create_sinPrice_400() throws Exception { postEsperaBadRequest(SIN_PRICE); }
-    @Test @WithMockUser void create_priceCero_400() throws Exception { postEsperaBadRequest(PRICE_CERO); }
-    @Test @WithMockUser void create_priceNegativo_400() throws Exception { postEsperaBadRequest(PRICE_NEGATIVO); }
-    @Test @WithMockUser void create_sinDurationDays_400() throws Exception { postEsperaBadRequest(SIN_DURATION); }
-    @Test @WithMockUser void create_durationDaysCero_400() throws Exception { postEsperaBadRequest(DURATION_CERO); }
-    @Test @WithMockUser void create_durationDaysNegativa_400() throws Exception { postEsperaBadRequest(DURATION_NEGATIVA); }
+    @Test @WithMockUser(roles = "ADMIN") void create_sinName_400() throws Exception { postEsperaBadRequest(SIN_NAME); }
+    @Test @WithMockUser(roles = "ADMIN") void create_nameVacio_400() throws Exception { postEsperaBadRequest(NAME_VACIO); }
+    @Test @WithMockUser(roles = "ADMIN") void create_sinPrice_400() throws Exception { postEsperaBadRequest(SIN_PRICE); }
+    @Test @WithMockUser(roles = "ADMIN") void create_priceCero_400() throws Exception { postEsperaBadRequest(PRICE_CERO); }
+    @Test @WithMockUser(roles = "ADMIN") void create_priceNegativo_400() throws Exception { postEsperaBadRequest(PRICE_NEGATIVO); }
+    @Test @WithMockUser(roles = "ADMIN") void create_sinDurationDays_400() throws Exception { postEsperaBadRequest(SIN_DURATION); }
+    @Test @WithMockUser(roles = "ADMIN") void create_durationDaysCero_400() throws Exception { postEsperaBadRequest(DURATION_CERO); }
+    @Test @WithMockUser(roles = "ADMIN") void create_durationDaysNegativa_400() throws Exception { postEsperaBadRequest(DURATION_NEGATIVA); }
 
-    @Test @WithMockUser void update_sinName_400() throws Exception { putEsperaBadRequest(SIN_NAME); }
-    @Test @WithMockUser void update_sinPrice_400() throws Exception { putEsperaBadRequest(SIN_PRICE); }
-    @Test @WithMockUser void update_priceNegativo_400() throws Exception { putEsperaBadRequest(PRICE_NEGATIVO); }
-    @Test @WithMockUser void update_sinDurationDays_400() throws Exception { putEsperaBadRequest(SIN_DURATION); }
-    @Test @WithMockUser void update_durationDaysCero_400() throws Exception { putEsperaBadRequest(DURATION_CERO); }
+    @Test @WithMockUser(roles = "ADMIN") void update_sinName_400() throws Exception { putEsperaBadRequest(SIN_NAME); }
+    @Test @WithMockUser(roles = "ADMIN") void update_sinPrice_400() throws Exception { putEsperaBadRequest(SIN_PRICE); }
+    @Test @WithMockUser(roles = "ADMIN") void update_priceNegativo_400() throws Exception { putEsperaBadRequest(PRICE_NEGATIVO); }
+    @Test @WithMockUser(roles = "ADMIN") void update_sinDurationDays_400() throws Exception { putEsperaBadRequest(SIN_DURATION); }
+    @Test @WithMockUser(roles = "ADMIN") void update_durationDaysCero_400() throws Exception { putEsperaBadRequest(DURATION_CERO); }
 }

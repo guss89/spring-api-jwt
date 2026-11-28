@@ -1,6 +1,6 @@
 package com.calisthenics.calisthenics.dto;
 
-import org.springframework.cglib.core.Local;
+import com.calisthenics.calisthenics.model.ClientRoutine;
 
 import java.time.LocalDate;
 
@@ -29,6 +29,18 @@ public class ClientRoutineResponse {
         this.endDate = endDate;
         this.observations = observations;
         this.active = active;
+    }
+
+    public static ClientRoutineResponse from(ClientRoutine cr) {
+        return new ClientRoutineResponse(
+                cr.getId(),
+                cr.getUser().getId(),
+                cr.getRoutine().getId(),
+                cr.getStartDate(),
+                cr.getEndDate(),
+                cr.getObservations(),
+                cr.getActive()
+        );
     }
 
     public void setId(Long id){ this.id = id;}
